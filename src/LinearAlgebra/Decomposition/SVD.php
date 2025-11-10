@@ -111,7 +111,7 @@ class SVD extends Decomposition
 
         // If S is non-diagonal, try permuting S to be diagonal
         if (!$S->isRectangularDiagonal()) {
-            ['sort'=>$sort, 'P'=>$P] = self::diagonalize($S);
+            ['sort' => $sort, 'P' => $P] = self::diagonalize($S);
             // Depending on the value of $sort, we either permute the rows or columns of $S 
             if ($sort === 'm') {
                 $S = $P->multiply($S);            // Permute rows of S
@@ -204,7 +204,7 @@ class SVD extends Decomposition
             $leftPos = $zeroMap[$left];
             $rightPos = $zeroMap[$right];
 
-            return $leftPos >= $rightPos;
+            return $leftPos <=> $rightPos;
         });
 
         // Only check the columns that contain diagonal entries
@@ -249,8 +249,8 @@ class SVD extends Decomposition
         // Need to make column ($i of $nonDiagonalValues) = row ($j)
         // order = [1=>2, 2=>1, 3=>3]
         uksort($P, function ($left, $right) use ($map) {
-            $leftPos = isset($map[$left]) ? $map[$left] : INF; // sorts in ascending order, so just use inf
-            $rightPos = isset($map[$right]) ? $map[$right] : INF;
+            $leftPos = $map[$left] ?? INF; // sorts in ascending order, so just use inf
+            $rightPos = $map[$right] ?? INF;
 
             return $leftPos <=> $rightPos;
         });
@@ -262,7 +262,7 @@ class SVD extends Decomposition
             $P = $P->transpose();
         }
 
-        return ['sort'=>$sort, 'P' => $P];
+        return ['sort' => $sort, 'P' => $P];
     }
 
     /**
@@ -326,7 +326,7 @@ class SVD extends Decomposition
             $leftPos = $map[$left];
             $rightPos = $map[$right];
 
-            return $leftPos >= $rightPos;
+            return $leftPos <=> $rightPos;
         });
 
         return MatrixFactory::createFromVectors($P);
