@@ -368,8 +368,8 @@ class MatrixOperationsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * Should return the inverse when the matrix is square, so reuse the inverse test dataset 
-     * 
+     * Should return the inverse when the matrix is square, so reuse the inverse test dataset
+     *
      * @test         pseudoInverse
      * @dataProvider dataProviderForInverse
      * @dataProvider dataProviderForPseudoInverse
@@ -391,7 +391,7 @@ class MatrixOperationsTest extends \PHPUnit\Framework\TestCase
         $this->assertEqualsWithDelta($A⁺, $pseudo, 0.001); // Test calculation
         $this->assertEqualsWithDelta($A⁺, $pseudoAgain, 0.001); // Test class attribute
     }
-    
+
     /**
      * @return array
      */

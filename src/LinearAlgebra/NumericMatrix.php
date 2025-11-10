@@ -1600,11 +1600,11 @@ class NumericMatrix extends Matrix
     /**
      * Moore-Penrose inverse, A⁺
      * Used for non-square or singular matrices
-     * 
+     *
      * Uses the SVD method of construction
      * Given SVD of A = USVᵀ
      * A⁺ = VS⁻¹Uᵀ
-     * 
+     *
      * @return NumericMatrix A⁺
      */
     public function pseudoInverse(): NumericMatrix
@@ -1612,7 +1612,7 @@ class NumericMatrix extends Matrix
         if ($this->catalog->hasPseudoInverse()) {
             return $this->catalog->getPseudoInverse();
         }
-        
+
         $SVD = $this->svd();
 
         $U = $SVD->U;
@@ -1623,8 +1623,7 @@ class NumericMatrix extends Matrix
         // Manually construct the inverse of S (in case it's singular)
         $D⁻¹ = [];
 
-        foreach ($D->getVector() as $element)
-        {
+        foreach ($D->getVector() as $element) {
             $D⁻¹[] = abs($element) < 0.0001 ? 0 : 1 / $element;
         }
 
@@ -1633,10 +1632,8 @@ class NumericMatrix extends Matrix
 
         $s = MatrixFactory::zero($m, $n)->transpose()->getMatrix();
 
-        for ($i = 0; $i < $n; $i++)
-        {
-            for ($j = 0; $j < $m; $j++)
-            {
+        for ($i = 0; $i < $n; $i++) {
+            for ($j = 0; $j < $m; $j++) {
                 if ($i === $j) {
                     $s[$i][$j] = array_shift($D⁻¹);
                 } else {

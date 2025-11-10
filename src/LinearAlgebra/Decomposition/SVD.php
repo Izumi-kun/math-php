@@ -112,7 +112,7 @@ class SVD extends Decomposition
         // If S is non-diagonal, try permuting S to be diagonal
         if (!$S->isRectangularDiagonal()) {
             ['sort' => $sort, 'P' => $P] = self::diagonalize($S);
-            // Depending on the value of $sort, we either permute the rows or columns of $S 
+            // Depending on the value of $sort, we either permute the rows or columns of $S
             if ($sort === 'm') {
                 $S = $P->multiply($S);            // Permute rows of S
                 $U = $U->multiply($P->inverse()); // Permute corresponding columns of U
@@ -150,9 +150,9 @@ class SVD extends Decomposition
 
     /**
      * Returns a permutation matrix, P, such that the product of SP is diagonal
-     * 
+     *
      * @param NumericMatrix $S the matrix to diagonalize
-     * 
+     *
      * @return array{'sort': string, 'P': NumericMatrix} a matrix, P, that will diagonalize S. Multiplication order defined by sort
      * If 'm', then pre-multiply
      * If 'n', then post-multiply
@@ -188,8 +188,7 @@ class SVD extends Decomposition
 
         $zeroCols = [];
 
-        foreach ($vectors as $i => $vector)
-        {
+        foreach ($vectors as $i => $vector) {
             // Each column should contain 1 non-zero element
             $isZero = Arithmetic::almostEqual((float) $vector->l2Norm(), 0);
 
@@ -208,13 +207,12 @@ class SVD extends Decomposition
         });
 
         // Only check the columns that contain diagonal entries
-        $vectors = $S->submatrix(0,0, $min-1, $min-1)->{$vecMethod}();
+        $vectors = $S->submatrix(0, 0, $min-1, $min-1)->{$vecMethod}();
 
         $nonDiagonalValues = [];
 
         /** @var Vector */
-        foreach ($vectors as $i => $vector)
-        {
+        foreach ($vectors as $i => $vector) {
             $ε = $S->getError();
 
             // Each column should contain up to 1 non-zero element
@@ -238,8 +236,7 @@ class SVD extends Decomposition
         // Now create a sort order
         $order = range(0, $min - 1);
 
-        foreach ($nonDiagonalValues as $i => $elem)
-        {
+        foreach ($nonDiagonalValues as $i => $elem) {
             $entry = $elem['j'];
             $order[$entry] = $i;
         }
@@ -256,7 +253,7 @@ class SVD extends Decomposition
         });
 
         $P = MatrixFactory::createFromVectors($P);
-        
+
         // fromVectors treats the array as column vectors, so the matrix might need to be transposed
         if ($sort === 'm') {
             $P = $P->transpose();
@@ -267,12 +264,12 @@ class SVD extends Decomposition
 
     /**
      * Checks that a vector has a single non-zero entry and returns its index
-     * 
+     *
      * @param Vector $v
-     * 
+     *
      * @return int The index of the non-zero entry or -1 if either:
      *      1. There are multiple non-zero entries
-     *      2. The vector is a zero vector 
+     *      2. The vector is a zero vector
      */
     private static function getStandardBasisIndex(Vector $v, float $ε): int
     {
@@ -282,9 +279,8 @@ class SVD extends Decomposition
 
         // Vectors don't have negative indices
         $index = -1;
-    
-        foreach ($v->getVector() as $i => $component)
-        {
+
+        foreach ($v->getVector() as $i => $component) {
             if (!Arithmetic::almostEqual($component, 0, $ε)) {
                 if ($index === -1) {
                     $index = $i;
@@ -299,16 +295,16 @@ class SVD extends Decomposition
 
     /**
      * Returns a permutation matrix that sorts its diagonal values in descending order
-     * 
+     *
      * @param NumericMatrix $S singular matrix
-     * 
+     *
      * @return NumericMatrix a permutation matrix such that PᵀSP is diagonal
      */
     private static function sortDiagonal(NumericMatrix $S): NumericMatrix
     {
         // Get diagonal, pad it by columns, and sort it
         $diagonal = $S->getDiagonalElements();
-        
+
         // Pad
         $padLength = $S->getN() - count($diagonal);
 
@@ -334,17 +330,18 @@ class SVD extends Decomposition
 
     /**
      * Checks if the elements of a diagonal matrix are in descending order
-     * 
+     *
      * @param NumericMatrix $S the matrix to check
-     * 
+     *
      * @return bool
      */
     private static function isDiagonalDescending(NumericMatrix $S): bool
     {
         $diagonal = $S->getDiagonalElements();
-        $sorted = array_values($diagonal); rsort($sorted, SORT_NUMERIC);
+        $sorted = array_values($diagonal);
+        rsort($sorted, SORT_NUMERIC);
 
-        // Compare sorted using matrix error (in case duplicate, floating-point eigenvalues) 
+        // Compare sorted using matrix error (in case duplicate, floating-point eigenvalues)
         $n = count($diagonal);
         for ($i = 0; $i < $n; $i++) {
             if (!Arithmetic::almostEqual($diagonal[$i], $sorted[$i], $S->getError())) {
