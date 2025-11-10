@@ -153,10 +153,11 @@ class EffectSizeTest extends \PHPUnit\Framework\TestCase
         $q = EffectSize::cohensQ($r₁, $r₂);
 
         // Then
-        $this->assertEqualsWithDelta($expected, $q, 0.001);
+        $this->assertEqualsWithDelta($expected, $q, \abs($expected) * 1e-10 + 1e-14);
     }
 
     /**
+     * Test data generated with R: cohens_q {ClinSigMeasures}
      * @return array  [r₁, r₂, expected]
      */
     public function dataProviderForCohensQ(): array
@@ -164,25 +165,52 @@ class EffectSizeTest extends \PHPUnit\Framework\TestCase
         return [
             [0.1, 0.1, 0],
             [0.5, 0.5, 0],
-            [0.1, 0.2, 0.102],
-            [0.2, 0.1, 0.102],
-            [0.1, 0.5, 0.449],
-            [0.1, 0.9, 1.372],
-            [0.1, 0, 0.1],
-            [0.1, -0.1, 0.201],
+            [0.1, 0.2, 0.102397206323006],
+            [0.2, 0.1, 0.102397206323006],
+            [0.1, 0.5, 0.448970796602979],
+            [0.1, 0.9, 1.37188414185214],
+            [0.1, 0, 0.100335347731076],
+            [0.1, -0.1, 0.200670695462151],
+            [1, 0.5, \INF],
+            [-1, 0.5, \INF],
+            [0.5, 1, \INF],
+            [0.5, -1, \INF],
         ];
     }
 
     /**
-     * @test     cohensQ R out of bounds
+     * @test         cohensQ R out of bounds
+     * @dataProvider dataProviderForCohensQOutOfBounds
+     * @param        float $r₁
+     * @param        float $r₂
      */
-    public function testCohensQExceptionROutOfBounds()
+    public function testCohensQExceptionROutOfBounds(float $r₁, float $r₂)
     {
         // Then
         $this->expectException(Exception\OutOfBoundsException::class);
 
         // When
-        EffectSize::cohensQ(0.1, 2);
+        EffectSize::cohensQ($r₁, $r₂);
+    }
+
+    /**
+     * @return array [[r₁, r₂]
+     */
+    public function dataProviderForCohensQOutOfBounds(): array
+    {
+        return [
+            [1.1, 0.1],
+            [2, 0.1],
+            [1.1, 1.1],
+            [2, 2],
+            [0.1, 1.1],
+            [0.1, 2],
+            [-1.1, 0.1],
+            [-2, 0.1],
+            [-2, -2],
+            [0.1, -1.1],
+            [0.1, -2],
+        ];
     }
 
     /**
@@ -217,6 +245,13 @@ class EffectSizeTest extends \PHPUnit\Framework\TestCase
             [6.7, 6, 1.2, 1, 0.6337502222976299],
             [9, 3.5, 1.2, 1.5, 4.049155956077707],
             [108, 118, 15, 14.83239697419133, -0.6704015],
+            // Test data: R cohens_d {ClinSigMeasures}
+            [1, 1, 1, 1, 0],
+            [2, 2, 2, 2, 0],
+            [2, 3, 1.2, 4.3, -0.316782621528642],
+            [2, 3, 0, 4.3, -0.328886874970487],
+            [2, 3, 1.2, 0, -1.17851130197758],
+            [2, 3, 0, 0, \INF],
         ];
     }
 
@@ -256,7 +291,31 @@ class EffectSizeTest extends \PHPUnit\Framework\TestCase
             [6.7, 6, 1.2, 1, 45, 15, 0.59824169],
             [9, 3.5, 1.2, 1.5, 13, 15, 3.89844347],
             [108, 118, 15, 14.83239697419133, 21, 18, -0.65642092],
+            // Edge case
+            [3, 3, 0, 0, 5, 5, \INF],
         ];
+    }
+
+    /**
+     * @test Sample sizes of both n = 1 results in a bad data exception
+     */
+    public function testHedgesGBadDataExceptionSampleSizesBothOne()
+    {
+        // Given
+        $n₁ = 1;
+        $n₂ = 1;
+
+        // And
+        $μ₁ = 3;
+        $μ₂ = 4;
+        $s₁ = 1.3;
+        $s₂ = 1.5;
+
+        // Then
+        $this->expectException(Exception\BadDataException::class);
+
+        // When
+        $g = EffectSize::hedgesG($μ₁, $μ₂, $s₁, $s₂, $n₁, $n₂);
     }
 
     /**
@@ -285,6 +344,7 @@ class EffectSizeTest extends \PHPUnit\Framework\TestCase
             [40, 57.727272727273, 30.763910379179, -0.57623600],
             [3, 4, 1.5811388300842, -0.63245553],
             [3, 3, 1.5, 0],
+            [3, 3, 0, \INF],
         ];
     }
 }

@@ -622,9 +622,9 @@ class Descriptive
     {
         $quartiles = self::quartiles($numbers);
         $Q1        = $quartiles['Q1'];
-        $Q2        = $quartiles['Q3'];
+        $Q3        = $quartiles['Q3'];
 
-        return Average::mean([$Q1, $Q2]);
+        return Average::mean([$Q1, $Q3]);
     }
 
     /**
@@ -642,7 +642,7 @@ class Descriptive
      *
      * @param float[] $numbers
      *
-     * @return float
+     * @return float (returns NAN if mean is zero)
      *
      * @throws Exception\BadDataException if the input array of numbers is empty
      * @throws Exception\OutOfBoundsException if degrees of freedom is ≤ 0
@@ -652,7 +652,7 @@ class Descriptive
         $σ = self::standardDeviation($numbers);
         $μ = Average::mean($numbers);
 
-        return $σ / $μ;
+        return $μ != 0 ? $σ / $μ : \NAN;
     }
 
     /**

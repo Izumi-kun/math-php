@@ -28,7 +28,7 @@ class Significance
      * @param float $Hₐ Alternate hypothesis (M Sample mean)
      * @param int   $n  Sample size
      * @param float $H₀ Null hypothesis (μ Population mean)
-     * @param float $σ  SD of population (Standard error of the mean)
+     * @param float $σ  SD of population
      *
      * @return array{
      *   z: float,
@@ -61,7 +61,7 @@ class Significance
      * @param float $Hₐ Alternate hypothesis (M Sample mean)
      * @param int   $n  Sample size
      * @param float $H₀ Null hypothesis (μ Population mean)
-     * @param float $σ  SD of population (Standard error of the mean)
+     * @param float $σ  SD of population
      *
      * @return array{
      *   z: float,
@@ -126,7 +126,7 @@ class Significance
      * @param float $μ₁ Sample mean of population 1
      * @param float $μ₂ Sample mean of population 2
      * @param int   $n₁ Sample size of population 1
-     * @param int   $n₂ Sample size of population 1
+     * @param int   $n₂ Sample size of population 2
      * @param float $σ₁ Standard deviation of sample mean 1
      * @param float $σ₂ Standard deviation of sample mean 2
      * @param float $Δ  (Optional) hypothesized difference between the population means (0 if testing for equal means)
@@ -280,7 +280,7 @@ class Significance
      *
      * @param float $Hₐ Alternate hypothesis (M Sample mean)
      * @param float $s  SD of sample
-     * @param int    $n  Sample size
+     * @param int   $n  Sample size
      * @param float $H₀ Null hypothesis (μ₀ Population mean)
      *
      * @return array{
@@ -301,6 +301,11 @@ class Significance
      */
     public static function tTestOneSampleFromSummaryData(float $Hₐ, float $s, int $n, float $H₀): array
     {
+        // Check for zero standard deviation - t-test requires non-zero variance
+        if ($s == 0) {
+            throw new Exception\BadDataException('T-test requires non-zero variance. Sample has zero standard deviation.');
+        }
+
         // Calculate test statistic t
         $t = self::tScore($Hₐ, $s, $n, $H₀);
 
@@ -436,7 +441,7 @@ class Significance
      * @param float $μ₁ Sample mean of population 1
      * @param float $μ₂ Sample mean of population 2
      * @param int   $n₁ Sample size of population 1
-     * @param int   $n₂ Sample size of population 1
+     * @param int   $n₂ Sample size of population 2
      * @param float $σ₁ Standard deviation of sample mean 1
      * @param float $σ₂ Standard deviation of sample mean 2
      *
@@ -462,6 +467,11 @@ class Significance
      */
     public static function tTestTwoSampleFromSummaryData(float $μ₁, float $μ₂, int $n₁, int $n₂, float $σ₁, float $σ₂): array
     {
+        // Check for zero variance in both samples - t-test requires at least one sample with variation
+        if ($σ₁ == 0 && $σ₂ == 0) {
+            throw new Exception\BadDataException('T-test requires at least one sample with non-zero variance. Both samples have zero standard deviation.');
+        }
+
         // Calculate t score (test statistic)
         $t = ($μ₁ - $μ₂) / \sqrt((($σ₁ ** 2) / $n₁) + (($σ₂ ** 2) / $n₂));
 

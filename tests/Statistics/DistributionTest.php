@@ -108,6 +108,10 @@ class DistributionTest extends \PHPUnit\Framework\TestCase
     {
         return [
             [
+                [1, 2, 2, 3, 4, 4, 4, 5],
+                [1 => 1, 2 => 3, 3 => 4, 4 => 7, 5 => 8],
+            ],
+            [
                 [ 'A', 'A', 'B', 'B', 'B', 'B', 'C', 'C', 'D', 'F' ],
                 [ 'A' => 2, 'B' => 6, 'C' => 8, 'D' => 9, 'F' => 10 ],
             ],
@@ -117,11 +121,23 @@ class DistributionTest extends \PHPUnit\Framework\TestCase
             ],
             [
                 [ 'yes', 'yes', 'no', 'yes', 'no', 'no', 'yes', 'yes', 'yes', 'no' ],
-                [ 'yes' => 6, 'no' => 10 ],
+                [ 'no' => 4, 'yes' => 10 ],
             ],
             [
                 [ 'agree', 'disagree', 'agree', 'agree', 'no opinion', 'agree', 'disagree' ],
                 [ 'agree' => 4, 'disagree' => 6, 'no opinion' => 7 ],
+            ],
+            [
+                [3, 1, 2, 3, 1],
+                [1 => 2, 2 => 3, 3 => 5],
+            ],
+            [
+                [2, 1, 3, 3, 1],
+                [1 => 2, 2 => 3, 3 => 5],
+            ],
+            [
+                [2, 2, 1, 3, 4, 5, 4, 4],
+                [1 => 1, 2 => 3, 3 => 4, 4 => 7, 5 => 8],
             ],
         ];
     }
@@ -148,6 +164,10 @@ class DistributionTest extends \PHPUnit\Framework\TestCase
     {
         return [
             [
+                [1, 2, 2, 3, 4, 4, 4, 5],
+                [1 => 0.125, 2 => 0.375, 3 => 0.5, 4 => 0.875, 5 => 1],
+            ],
+            [
                 [ 'A', 'A', 'B', 'B', 'B', 'B', 'C', 'C', 'D', 'F' ],
                 [ 'A' => 0.2, 'B' => 0.6, 'C' => 0.8, 'D' => 0.9, 'F' => 1 ],
             ],
@@ -157,11 +177,23 @@ class DistributionTest extends \PHPUnit\Framework\TestCase
             ],
             [
                 [ 'yes', 'yes', 'no', 'yes', 'no', 'no', 'yes', 'yes', 'yes', 'no' ],
-                [ 'yes' => 0.6, 'no' => 1 ],
+                [ 'no' => 0.4, 'yes' => 1 ],
             ],
             [
                 [ 'agree', 'disagree', 'agree', 'agree', 'no opinion', 'agree', 'disagree' ],
                 [ 'agree' => 0.57142857, 'disagree' => 0.85714286, 'no opinion' => 1 ],
+            ],
+            [
+                [3, 1, 2, 3, 1],
+                [1 => 0.4, 2 => 0.6, 3 => 1],
+            ],
+            [
+                [2, 1, 3, 3, 1],
+                [1 => 0.4, 2 => 0.6, 3 => 1],
+            ],
+            [
+                [2, 2, 1, 3, 4, 5, 4, 4],
+                [1 => 0.125, 2 => 0.375, 3 => 0.5, 4 => 0.875, 5 => 1],
             ],
         ];
     }
@@ -339,6 +371,96 @@ class DistributionTest extends \PHPUnit\Framework\TestCase
             [
                 [2.534, 2.512, 2.4634, 2.512, 2.543, 2.5, 2.51, 2.49, 2.49, 2.53, 2.5],
                 [10.0, 7.5, 1.0, 7.5, 11.0, 4.5, 6.0, 2.5, 2.5, 9.0, 4.5],
+            ],
+            // Edge case: Floating-point arithmetic - 0.1+0.2 vs 0.3
+            [
+                [0.3, 0.3, 0.5, 0.7, 0.9],
+                [1.5, 1.5, 3, 4, 5],
+            ],
+            // Edge case: Values differing by machine epsilon (1e-14)
+            [
+                [1, 1.00000000000001, 2, 3, 4],
+                [1, 2, 3, 4, 5],
+            ],
+            // Edge case: All identical integer values
+            [
+                [5, 5, 5, 5, 5],
+                [3, 3, 3, 3, 3],
+            ],
+            // Edge case: All identical float values
+            [
+                [2.5, 2.5, 2.5, 2.5],
+                [2.5, 2.5, 2.5, 2.5],
+            ],
+            // Large array with multiple tie groups
+            [
+                [1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5],
+                [1, 2.5, 2.5, 5, 5, 5, 8.5, 8.5, 8.5, 8.5, 13, 13, 13, 13, 13],
+            ],
+            // Negative numbers with multiple ties
+            [
+                [-5, -5, -3, -3, -3, -1, 0, 0, 1],
+                [1.5, 1.5, 4, 4, 4, 6, 7.5, 7.5, 9],
+            ],
+            // Very small differences (1e-10 apart)
+            [
+                [1, 1.0000000001, 1.0000000002, 2],
+                [1, 2, 3, 4],
+            ],
+            // Mix of very large and very small numbers
+            [
+                [1e-6, 1e6, 1e-6, 1e6, 0],
+                [2.5, 4.5, 2.5, 4.5, 1],
+            ],
+            // Sequential ties at beginning
+            [
+                [1, 1, 1, 2, 3, 4, 5],
+                [2, 2, 2, 4, 5, 6, 7],
+            ],
+            // Sequential ties at end
+            [
+                [1, 2, 3, 4, 5, 5, 5],
+                [1, 2, 3, 4, 6, 6, 6],
+            ],
+            // Alternating pattern of ties
+            [
+                [1, 2, 1, 2, 1, 2],
+                [2, 5, 2, 5, 2, 5],
+            ],
+            // Float precision with 0.1 increments
+            [
+                [0.1, 0.2, 0.3, 0.3, 0.4, 0.5],
+                [1, 2, 3.5, 3.5, 5, 6],
+            ],
+            // Scientific notation edge cases
+            [
+                [1e-10, 2e-10, 1e-10, 3e-10],
+                [1.5, 3, 1.5, 4],
+            ],
+            // Large array (20 elements) with 4 tie groups
+            [
+                [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4],
+                [3, 3, 3, 3, 3, 8, 8, 8, 8, 8, 13, 13, 13, 13, 13, 18, 18, 18, 18, 18],
+            ],
+            // Decimal values with varying precision
+            [
+                [1.1, 1.11, 1.111, 1.1, 1.11],
+                [1.5, 3.5, 5, 1.5, 3.5],
+            ],
+            // Zero handling (-0.0 and 0.0 should be treated as equal)
+            [
+                [-0, 0, 1, -1, 0],
+                [3, 3, 5, 1, 3],
+            ],
+            // Two elements - tied
+            [
+                [3.14, 3.14],
+                [1.5, 1.5],
+            ],
+            // Two elements - distinct
+            [
+                [2.71, 3.14],
+                [1, 2],
             ],
         ];
     }
@@ -633,5 +755,21 @@ class DistributionTest extends \PHPUnit\Framework\TestCase
 
         // When
         Distribution::stemAndLeafPlot([1, 2, 3], $print);
+    }
+
+    /**
+     * @test stemAndLeafPlot throws exception for negative values
+     */
+    public function testStemAndLeafPlotThrowsExceptionForNegativeValues()
+    {
+        // Given
+        $values = [44, 46, -15, 63, 64];
+
+        // Then
+        $this->expectException(\MathPHP\Exception\BadDataException::class);
+        $this->expectExceptionMessage('Stem and leaf plots require non-negative integers. Value -15 is negative.');
+
+        // When
+        Distribution::stemAndLeafPlot($values);
     }
 }

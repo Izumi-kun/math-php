@@ -2,6 +2,8 @@
 
 namespace MathPHP\Statistics;
 
+use MathPHP\Exception;
+
 class Distribution
 {
     public const PRINT = true;
@@ -69,6 +71,8 @@ class Distribution
      */
     public static function cumulativeFrequency(array $values): array
     {
+        \sort($values);
+
         $running_total          = 0;
         $cumulative_frequencies = array();
         foreach (self::frequency($values) as $value => $frequency) {
@@ -93,11 +97,11 @@ class Distribution
      */
     public static function cumulativeRelativeFrequency(array $values): array
     {
-        $sample_size            = \count($values);
+        $n                      = \count($values);
         $cumulative_frequencies = self::cumulativeFrequency($values);
         return \array_map(
-            function ($frequency) use ($sample_size) {
-                return $frequency / $sample_size;
+            function ($frequency) use ($n) {
+                return $frequency / $n;
             },
             $cumulative_frequencies
         );
@@ -107,7 +111,48 @@ class Distribution
      * Assign a fractional average ranking to data - ("1 2.5 2.5 4" ranking)
      * https://en.wikipedia.org/wiki/Ranking
      *
+     * Fractional ranking assigns tied values the average of the ranks they would have
+     * received if they had been slightly different. This is also known as "average rank"
+     * or "mean rank" method.
+     *
+     * Algorithm:
+     * 1. Track original positions of all input values
+     * 2. Sort values in ascending order
+     * 3. For each group of tied values (detected using == comparison):
+     *    - Calculate the fractional rank as the average of all positions in the tie group
+     *    - Assign this fractional rank to all tied values
+     * 4. Return ranks in original input order
+     *
+     * Tie Detection:
+     * Uses exact equality (==) for tie detection, matching R and SciPy behavior.
+     * Floating-point values that differ by machine epsilon are treated as distinct values.
+     *
+     * Example 1 - Simple ties:
+     *   Input:  [1, 2, 2, 3]
+     *   Sorted: [1, 2, 2, 3]
+     *   Ranks:  [1, 2.5, 2.5, 4]
+     *   Explanation:
+     *     - 1 gets rank 1 (position 1)
+     *     - Two 2's tie for positions 2 and 3, so each gets (2+3)/2 = 2.5
+     *     - 3 gets rank 4 (position 4)
+     *
+     * Example 2 - Original order preserved:
+     *   Input:  [3, 1, 2, 2]
+     *   Sorted: [1, 2, 2, 3]
+     *   Ranks:  [4, 1, 2.5, 2.5]
+     *   Explanation:
+     *     - First element (3) is largest → rank 4
+     *     - Second element (1) is smallest → rank 1
+     *     - Third and fourth elements (2, 2) tie → ranks 2.5, 2.5
+     *
+     * Example 3 - Multiple tied values:
+     *   Input:  [1, 2, 3, 3, 3, 4, 5]
+     *   Ranks:  [1, 2, 4, 4, 4, 6, 7]
+     *   Explanation:
+     *     - Three 3's tie for positions 3, 4, and 5, so each gets (3+4+5)/3 = 4
+     *
      * Similar to R: rank(values, ties.method='average')
+     * Similar to SciPy: scipy.stats.rankdata(values, method='average')
      *
      * @param array<scalar> $values to be ranked
      *
@@ -115,31 +160,56 @@ class Distribution
      */
     public static function fractionalRanking(array $values): array
     {
-        $Xs = $values;
-        \sort($Xs);
-
-        // Determine ranks - some items might show up multiple times, so record each successive rank.
-        $ordinalRanking⟮X⟯ = [];
-        foreach ($Xs as $rank => $xᵢ) {
-            $ordinalRanking⟮X⟯[\strval($xᵢ)][] = $rank + 1;
+        // Create array of [original_index => value] to track original positions
+        $indexed_values = [];
+        foreach ($values as $index => $value) {
+            $indexed_values[] = ['index' => $index, 'value' => $value];
         }
 
-        // Determine average rank of each value. Necessary when values show up multiple times.
-        // Rank will not change if value only shows up once.
-        $rg⟮X⟯ = \array_map(
-            function (array $x) {
-                return \array_sum($x) / \count($x);
-            },
-            $ordinalRanking⟮X⟯
-        );
+        // Sort by value
+        \usort($indexed_values, function ($a, $b) {
+            return $a['value'] <=> $b['value'];
+        });
 
-        // Map ranks to values in order they were originally input
-        return \array_map(
-            function ($value) use ($rg⟮X⟯) {
-                return $rg⟮X⟯[\strval($value)];
-            },
-            $values
-        );
+        // Assign ranks with exact equality for tie detection
+        $ranks = [];
+        $n = \count($indexed_values);
+
+        for ($i = 0; $i < $n; $i++) {
+            // Find all values that exactly equal current value
+            $tie_indices = [$i];
+            $current_value = $indexed_values[$i]['value'];
+
+            // Look ahead for exact ties
+            for ($j = $i + 1; $j < $n; $j++) {
+                if ($current_value == $indexed_values[$j]['value']) {
+                    $tie_indices[] = $j;
+                } else {
+                    break; // Values are sorted, so no more ties possible
+                }
+            }
+
+            // Calculate fractional rank (average of all tied positions)
+            // Ranks are 1-indexed, so position i has rank i+1
+            $rank_sum = 0;
+            foreach ($tie_indices as $idx) {
+                $rank_sum += $idx + 1;
+            }
+            $fractional_rank = $rank_sum / \count($tie_indices);
+
+            // Assign same rank to all tied values
+            foreach ($tie_indices as $idx) {
+                $ranks[$indexed_values[$idx]['index']] = $fractional_rank;
+            }
+
+            // Skip past all tied values
+            $i = $tie_indices[\count($tie_indices) - 1];
+        }
+
+        // Sort ranks by original index to return in original order
+        \ksort($ranks);
+
+        return \array_values($ranks);
     }
 
     /**
@@ -262,13 +332,22 @@ class Distribution
      *   9 |
      *  10 | 6
      *
-     * @param array<int> $values
+     * @param array<int> $values Non-negative integers only
      * @param bool  $print  Optional setting to print the distribution
      *
      * @return array<int, array<int>> keys are the stems, values are the leaves
+     *
+     * @throws Exception\BadDataException if any value is negative
      */
     public static function stemAndLeafPlot(array $values, bool $print = false): array
     {
+        // All values must be non-negative
+        foreach ($values as $value) {
+            if ($value < 0) {
+                throw new Exception\BadDataException("Stem and leaf plots require non-negative integers. Value $value is negative.");
+            }
+        }
+
         // Split each value into stem and leaf
         \sort($values);
         $plot = array();

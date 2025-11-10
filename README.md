@@ -365,6 +365,53 @@ $pFq = Special::generalizedHypergeometric($p, $q, $a, $b, $c, $z);
 $₁F₁ = Special::confluentHypergeometric($a, $b, $z);
 $₂F₁ = Special::hypergeometric($a, $b, $c, $z);
 
+// Bessel functions
+// Bessel functions of the first kind J₀(x), J₁(x), Jₙ(x), Jᵥ(x)
+$J₀ = Special::besselJ0($x);
+$J₁ = Special::besselJ1($x);
+$Jₙ = Special::besselJn($n, $x);
+$Jᵥ = Special::besselJv($v, $x);
+
+// Bessel functions of the second kind Y₀(x), Y₁(x), Yₙ(x)
+$Y₀ = Special::besselY0($x);
+$Y₁ = Special::besselY1($x);
+$Yₙ = Special::besselYn($n, $x);
+
+// Modified Bessel functions of the first kind I₀(x), I₁(x), Iᵥ(x)
+$I₀ = Special::besselI0($x);
+$I₁ = Special::besselI1($x);
+$Iᵥ = Special::besselIv($v, $x);
+
+// Modified Bessel functions of the second kind K₀(x), K₁(x), Kᵥ(x)
+$K₀ = Special::besselK0($x);
+$K₁ = Special::besselK1($x);
+$Kᵥ = Special::besselKv($v, $x);
+
+// Airy functions Ai(x), Bi(x) and their derivatives Ai'(x), Bi'(x)
+$Ai  = Special::airyAi($x);
+$Bi  = Special::airyBi($x);
+$Aip = Special::airyAip($x);  // Ai'(x)
+$Bip = Special::airyBip($x);  // Bi'(x)
+
+// Orthogonal polynomials
+// Legendre polynomials Pₙ(x)
+$Pₙ = Special::legendreP($n, $x);
+
+// Chebyshev polynomials of the first kind Tₙ(x)
+$Tₙ = Special::chebyshevT($n, $x);
+
+// Chebyshev polynomials of the second kind Uₙ(x)
+$Uₙ = Special::chebyshevU($n, $x);
+
+// Hermite polynomials Hₙ(x) (physicist's form)
+$Hₙ = Special::hermiteH($n, $x);
+
+// Hermite polynomials Heₙ(x) (probabilist's form)
+$Heₙ = Special::hermiteHe($n, $x);
+
+// Laguerre polynomials Lₙ(x)
+$Lₙ = Special::laguerreL($n, $x);
+
 // Sign function (also known as signum or sgn)
 $x    = 4;
 $sign = Special::signum($x); // same as sgn
@@ -456,10 +503,14 @@ $R = $A->rowSubtractScalar($mᵢ, $k);  // Subtract k from each item of row mᵢ
 // Column operations
 [$nᵢ, $nⱼ, $k] = [1, 2, 5];
 $R = $A->columnInterchange($nᵢ, $nⱼ);
-$R = $A->columnExclude($nᵢ);          // Exclude column $nᵢ
-$R = $A->columnMultiply($nᵢ, $k);     // Multiply column nᵢ by k
-$R = $A->columnAdd($nᵢ, $nⱼ, $k);     // Add k * column nᵢ to column nⱼ
-$R = $A->columnAddVector($nᵢ, $V);    // Add Vector V to column nᵢ
+$R = $A->columnExclude($nᵢ);             // Exclude column $nᵢ
+$R = $A->columnMultiply($nᵢ, $k);        // Multiply column nᵢ by k
+$R = $A->columnDivide($nᵢ, $k);          // Divide column nᵢ by k
+$R = $A->columnAdd($nᵢ, $nⱼ, $k);        // Add k * column nᵢ to column nⱼ
+$R = $A->columnAddScalar($n, $k);        // Add k to each item in column nⱼ
+$R = $A->columnAddVector($nᵢ, $V);       // Add Vector V to column nᵢ
+$R = $A->columnSubtract($nᵢ, $nⱼ, $k);   // Subtract k * column nᵢ from row nⱼ
+$R = $A->columnSubtractScalar($nᵢ, $k);  // Subtract k from each item of column nᵢ
 
 // Matrix augmentations - return a new Matrix
 $⟮A∣B⟯ = $A->augment($B);        // Augment on the right - standard augmentation
@@ -545,6 +596,11 @@ $U  = $LU->U;  // normalized upper triangular matrix
 $LLᵀ = $A->choleskyDecomposition();
 $L   = $LLᵀ->L;   // lower triangular matrix
 $LT  = $LLᵀ->LT;  // transpose of lower triangular matrix
+
+// Hessenberg decomposition
+$QHQᵀ = $A->hessenbergDecomposition();
+$Q    = $QHQᵀ->Q;  // orthogonal transformation matrix
+$H    = $QHQᵀ->H;  // upper Hessenberg matrix (zeros below first subdiagonal)
 
 // Eigenvalues and eigenvectors
 $eigenvalues   = $A->eigenvalues();   // array of eigenvalues
@@ -865,7 +921,8 @@ use MathPHP\NumberTheory\Integer;
 
 $n = 225;
 
-// Prime factorization
+// Prime numbers
+$bool    = Integer::isPrime($n);
 $factors = Integer::primeFactorization($n);
 
 // Divisor function
@@ -2266,6 +2323,7 @@ $d⟮X、Y⟯    = Distance::canberra($X, Y);
 brayCurtis = Distance::brayCurtis($X, $Y);
 $cosine    = Distance::cosine($X, $Y);
 $cos⟮α⟯     = Distance::cosineSimilarity($X, $Y);
+$D⟮X、Y⟯    = Distance::chebyshev($X, $Y);
 
 // Mahalanobis distance
 $x    = new Matrix([[6], [5]]);

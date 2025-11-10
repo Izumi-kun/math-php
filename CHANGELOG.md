@@ -1,5 +1,77 @@
 # MathPHP Change Log
 
+## v2.13.0 - 2025-10-23
+
+### New Features
+* Matrix `columnAddScalar`
+* Matrix `columnSubtract`
+* Matrix `columnSubtractScalar`
+* Matrix `columnDivide`
+
+### Bug Fixes
+* Algebra::quadratic returns empty array when a=0 and b=0 (Previously would divide by zero)
+* Trigonometry::unitCircle division by zero error for single-point.
+* SampleData\People `getShoeSize` has a typo and was `getShowSize`. This has been fixed.
+* Fixed calculation in Probability\Distribution\Discrete\Hypergeometric `cdf`. Implementation changed to use sum of PMFs.
+* Statistics\Correlation `sampleCovariance`, `populationCorrelationCoefficient`, `sampleCorrelationCoefficient`, throw BadDataException or OutOfBoundsException rather than division by zero for bad input data.
+* Statistics\Descriptive `coefficientOfVariation` will return NAN if mean is zero. Previously did division by zero.
+* Fix some typos in Statistics\Distance `hellinger`, `brayCurtis`, and `canberra` that could have resulted in incorrect results.
+* Fix \Statistics\EffectSize `cohensQ` bounds check [-1, 1] and throw OutOfBoundsException when outside range, and return INF when r == 1 or -1.
+* Fix \Statistics\EffectSize boundary edge cases resulting in division by zero for `hedgesG`, `cohensD`, and `glassDelta`.
+
+### Improvements
+* Refactor the geometric mean implementation to use a numerically stable log-space calculation
+* Refactor ChiSquared pdf to avoid raising 0 to negative exponent which is deprecated
+* Refactor LogLogistic pdf and cdf to avoid raising 0 to negative exponent which is deprecated
+* Improved implementation of NoncentralT `median`
+* Probability\Distribution\Multivariate\Multinomial uses a higher numerical precision to reject probabilities that don't sum to 1.0
+* Rewrote Statistics\Distribution `fractionalRanking` to track original indices and use == for tie detection instead of `strval()` grouping, avoiding floating-point comparison bugs.
+* Statistics\Distribution `cumulativeFrequency` and `cumulativeRelativeFrequency` now do a frequency distribution on sorted data, which was the original intent.
+* Statistics\Divergence `kullbackLeibler` and `jensenShannon` throw an exception if there are non-negative probabilities.
+* Statistics\Distribution `stemAndLeafPlot` throws an exception if there are negative values.
+* Statistics\Experiment functions throw exceptions when input outside of range. `likelihoodRatioSS` returns infinity for rather than division by zero.
+* Statistics\Outlier edge cases throw exceptions: Grubbs' having fewer than 3 observations; standard deviation of zero; Support upper/lower as aliases for one sided in `grubbsCriticalValue`.
+* Improved exception message for Functions\Support `checkLimits` to add invalid endpoint character in the exception message
+
+## v2.12.0 - 2025-10-17
+
+### New Features
+* Matrix Hessenberg decomposition
+* New special functions
+  * Bessel functions
+  * Airy functions
+  * Legendre polynomials
+  * Chebyshev polynomials
+  * Hermite polynomials
+  * Laguerre polynomials
+
+### Bug Fixes
+* Fixed issue 487 in t-test with data with no variance: throws proper exception
+* Fixed issue with Set `isProperSubset` where it didn't take into account identical sets
+* Fixed exception message for Functions\Support::checkLimits where invalid endpoint character did not display the endpoint character in the exception message
+
+### Improvements
+* Numerical precision improvements to numerous special functions
+* Documentation improvements and fixes
+
+## v2.11.0 - 2025-01-26
+
+### Improvements
+* Minor changes for PHP 8.4 compatibility
+
+## v2.10.0 - 2024-04-16
+
+### New Features
+* NumberTheory\Integer `isPrime`
+
+## v2.9.0 - 2024-03-02
+
+### New Features
+* Distance `chebyshev`
+
+### Improvements
+* Internal build CI/CD improvements
+
 ## v2.8.1 - 2023-05-18
 
 ### Improvements

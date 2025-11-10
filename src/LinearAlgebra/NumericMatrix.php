@@ -886,7 +886,7 @@ class NumericMatrix extends Matrix
         // Elements below lower diagonal are zero
         for ($i = 2; $i < $this->m; $i++) {
             for ($j = 0; $j < $i - 1; $j++) {
-                if ($this->A[$i][$j] != 0) {
+                if (Support::isNotZero($this->A[$i][$j], $this->ε)) {
                     return false;
                 }
             }
@@ -913,7 +913,7 @@ class NumericMatrix extends Matrix
         // Elements above upper diagonal are zero
         for ($i = 0; $i < $this->m; $i++) {
             for ($j = $i + 2; $j < $this->n; $j++) {
-                if ($this->A[$i][$j] != 0) {
+                if (Support::isNotZero($this->A[$i][$j], $this->ε)) {
                     return false;
                 }
             }
@@ -1283,13 +1283,11 @@ class NumericMatrix extends Matrix
             $R[$i] = \array_fill(0, $B->n, 0);
             foreach ($Bᵀ as $j => $Bᶜᵒˡ⟦j⟧) {
                 foreach ($Aʳᵒʷ⟦i⟧ as $k => $A⟦i⟧⟦k⟧) {
-                    // @phpstan-ignore-next-line (Remove in PHP 8.0, no longer returns false)
                     $R[$i][$j] += $A⟦i⟧⟦k⟧ * $Bᶜᵒˡ⟦j⟧[$k];
                 }
             }
         }
 
-        // @phpstan-ignore-next-line (Due to above false from array_fill)
         return MatrixFactory::createNumeric($R, $this->ε);
     }
 
@@ -2654,8 +2652,12 @@ class NumericMatrix extends Matrix
     /**************************************************************************
      * COLUMN OPERATIONS - Return a Matrix
      *  - columnMultiply
+     *  - columnDivide
      *  - columnAdd
+     *  - columnAddScalar
      *  - columnAddVector
+     *  - columnSubtract
+     *  - columnSubtractScalar
      **************************************************************************/
 
     /**
@@ -2682,6 +2684,39 @@ class NumericMatrix extends Matrix
 
         for ($i = 0; $i < $m; $i++) {
             $R[$i][$nᵢ] *= $k;
+        }
+
+        return MatrixFactory::createNumeric($R, $this->ε);
+    }
+
+    /**
+     * Divide a column by a divisor k
+     *
+     * Each element of Column nᵢ will be divided by k
+     *
+     * @param int   $nᵢ Column to divide
+     * @param float $k divisor
+     *
+     * @return NumericMatrix
+     *
+     * @throws Exception\MatrixException if column to divide does not exist
+     * @throws Exception\BadParameterException if k is 0
+     * @throws Exception\IncorrectTypeException
+     */
+    public function columnDivide(int $nᵢ, float $k): NumericMatrix
+    {
+        if ($nᵢ >= $this->n) {
+            throw new Exception\MatrixException('Column to divide does not exist');
+        }
+        if ($k == 0) {
+            throw new Exception\BadParameterException('Divisor k must not be 0');
+        }
+
+        $m = $this->m;
+        $R = $this->A;
+
+        for ($i = 0; $i < $m; $i++) {
+            $R[$i][$nᵢ] /= $k;
         }
 
         return MatrixFactory::createNumeric($R, $this->ε);
@@ -2720,6 +2755,33 @@ class NumericMatrix extends Matrix
     }
 
     /**
+     * Add a scalar k to each element of column nᵢ
+     *
+     * @param int   $nᵢ Column to add scalar to
+     * @param float $k Scalar to add to each element
+     *
+     * @return NumericMatrix
+     *
+     * @throws Exception\MatrixException if column to add does not exist
+     * @throws Exception\IncorrectTypeException
+     */
+    public function columnAddScalar(int $nᵢ, float $k): NumericMatrix
+    {
+        if ($nᵢ >= $this->n) {
+            throw new Exception\MatrixException('Column to add does not exist');
+        }
+
+        $m = $this->m;
+        $R = $this->A;
+
+        for ($i = 0; $i < $m; $i++) {
+            $R[$i][$nᵢ] += $k;
+        }
+
+        return MatrixFactory::createNumeric($R, $this->ε);
+    }
+
+    /**
      * Add components of vector V to column nᵢ
      *
      * @param int    $nᵢ Column to add vector $v to
@@ -2745,6 +2807,63 @@ class NumericMatrix extends Matrix
 
         for ($i = 0; $i < $m; $i++) {
             $R[$i][$nᵢ] += $V[$i];
+        }
+
+        return MatrixFactory::createNumeric($R, $this->ε);
+    }
+
+    /**
+     * Subtract k times column nᵢ to column nⱼ
+     *
+     * @param int   $nᵢ Column to multiply * k to be subtracted to column nⱼ
+     * @param int   $nⱼ Column that will have column nⱼ * k subtracted to it
+     * @param float $k Multiplier
+     *
+     * @return NumericMatrix
+     *
+     * @throws Exception\MatrixException if column to subtract does not exist
+     * @throws Exception\IncorrectTypeException
+     */
+    public function columnSubtract(int $nᵢ, int $nⱼ, float $k): NumericMatrix
+    {
+        if ($nᵢ >= $this->n || $nⱼ >= $this->n) {
+            throw new Exception\MatrixException('Column to subtract does not exist');
+        }
+
+        $m = $this->m;
+        $R = $this->A;
+
+        for ($i = 0; $i < $m; $i++) {
+            $R[$i][$nⱼ] -= $R[$i][$nᵢ] * $k;
+        }
+
+        return MatrixFactory::createNumeric($R, $this->ε);
+    }
+
+    /**
+     * Subtract a scalar k to each item of a column
+     *
+     * Each element of Column nᵢ will have k subtracted from it
+     *
+     * @param int   $nᵢ Column to subtract k from
+     * @param float $k scalar
+     *
+     * @return NumericMatrix
+     *
+     * @throws Exception\MatrixException if column to subtract does not exist
+     * @throws Exception\IncorrectTypeException
+     */
+    public function columnSubtractScalar(int $nᵢ, float $k): NumericMatrix
+    {
+        if ($nᵢ >= $this->n) {
+            throw new Exception\MatrixException('Column to subtract does not exist');
+        }
+
+        $m = $this->m;
+        $R = $this->A;
+
+        for ($i = 0; $i < $m; $i++) {
+            $R[$i][$nᵢ] -= $k;
         }
 
         return MatrixFactory::createNumeric($R, $this->ε);
@@ -2802,6 +2921,7 @@ class NumericMatrix extends Matrix
      *  - Cholesky decomposition
      *  - Crout decomposition
      *  - SVD (Singular Value Decomposition)
+     *  - Hessenberg decomposition
      ********************************************************************************/
 
     /**
@@ -2923,6 +3043,30 @@ class NumericMatrix extends Matrix
         }
 
         return $this->catalog->getSVD();
+    }
+
+    /**
+     * Hessenberg Decomposition
+     *
+     * A = QHQ*
+     *
+     * Where:
+     *  Q is an orthogonal matrix
+     *  H is an upper Hessenberg matrix (zeros below the first subdiagonal)
+     *  Q* is the conjugate transpose of Q
+     *
+     * @return Decomposition\Hessenberg
+     *
+     * @throws Exception\MatrixException if matrix is not square
+     * @throws Exception\MathException
+     */
+    public function hessenbergDecomposition(): Decomposition\Hessenberg
+    {
+        if (!$this->catalog->hasHessenbergDecomposition()) {
+            $this->catalog->addHessenbergDecomposition(Decomposition\Hessenberg::decompose($this));
+        }
+
+        return $this->catalog->getHessenbergDecomposition();
     }
 
     /**************************************************************************
@@ -3088,7 +3232,7 @@ class NumericMatrix extends Matrix
      * @throws Exception\MatrixException if method is not a valid eigenvalue method
      * @throws Exception\MathException
      */
-    public function eigenvalues(string $method = null): array
+    public function eigenvalues(?string $method = null): array
     {
         if (!$this->isSquare()) {
             throw new Exception\MatrixException('Eigenvalues can only be calculated on square matrices');
@@ -3127,7 +3271,7 @@ class NumericMatrix extends Matrix
      * @throws Exception\MatrixException if method is not a valid eigenvalue method
      * @throws Exception\MathException
      */
-    public function eigenvectors(string $method = null): NumericMatrix
+    public function eigenvectors(?string $method = null): NumericMatrix
     {
         if ($method === null) {
             return Eigenvector::eigenvectors($this, $this->eigenvalues());

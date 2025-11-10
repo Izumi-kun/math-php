@@ -27,7 +27,7 @@ class PeopleTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @test 11 variables
+     * @test 12 variables
      */
     public function testDataHas12Variables()
     {
@@ -192,12 +192,12 @@ class PeopleTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @test 32 show size observations
+     * @test 32 shoe size observations
      */
-    public function testNumberOfShowSize()
+    public function testNumberOfShoeSize()
     {
         // When
-        $observations = $this->people->getShowSize();
+        $observations = $this->people->getShoeSize();
 
         // Then
         $this->assertCount(32, $observations);
